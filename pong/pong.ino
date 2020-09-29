@@ -49,9 +49,98 @@ static const unsigned char PROGMEM logo_bmp[] =
   B01110000, B01110000,
   B00000000, B00110000 };
 
+// define input pins these are the pins on the arduino they never change so #define
+#define INTPIN    3       // only pins 2 and 3 can be interupt pins on UNO  
+#define UPPIN     4       // these are pins connected tp relevant switch
+#define DWNPIN    5
+#define LFTPIN    6
+#define RHTPIN    7
 
+// define directions
+#define DIRUP     1       // these values is what the "snake" looks at to decide-
+#define DIRDOWN   2       // the direction the snake will travel
+#define DIRLEFT   3
+#define DIRRIGHT  4
+
+// set button variables
+
+// volitile cos we need it to update with the interupt so can be any bit of cycle value 
+// is never higher than 4 so only need 8bit int to save resources
+volatile uint8_t buttonpressed=0;        
+bool butup=0;
+bool butdown=0;   // we use this to set true to "detect" which direction pressed
+bool butleft=0;
+bool butright=0;
+
+int x=0;
+
+// world ints
+
+uint8_t worldMinX=0;        // these set the limits of the play area
+uint8_t worldMaxX=128;
+uint8_t worldMinY=10;
+uint8_t worldMaxY=63;
+
+void interruptpressed() {
+    delay(200);  // slight delay for added "bounce" protection
+    updatedirection();
+}
+// ------------------ update the direction value from button press -----------------
+void updatedirection() {
+    // Serial.println("updatingdirection");
+    butup=digitalRead(UPPIN);       // check which input went high and set relevant bool true
+    butdown=digitalRead(DWNPIN);
+    butleft=digitalRead(LFTPIN);
+    butright=digitalRead(RHTPIN);
+    // these if statemeents look at which input went high and enters the relevant value in "buttonpressed"
+    // variable, this variable dictates the direction of movement
+    if(butup==true)
+     {
+        buttonpressed=DIRUP;
+         Serial.println("UP pressed");
+    //     Serial.println(buttonpressed);
+        butup=false;
+        //tone(SND,1500,10);
+    }
+    if(butdown==true)
+    {
+        buttonpressed=DIRDOWN;
+         Serial.println("DOWN pressed");
+    //     Serial.println(buttonpressed);
+        butdown=false;
+        //tone(SND,1500,10);
+    }
+    
+    if(butleft==true)
+    {
+        buttonpressed=DIRLEFT;
+        Serial.println("LEFT pressed");
+    //    Serial.println(buttonpressed);
+        butleft=false;
+        //tone(SND,1500,10);
+    }
+    if(butright==true)
+    {
+         buttonpressed=DIRRIGHT;
+         Serial.println("RIGHT pressed");
+    //     Serial.println(buttonpressed);
+          butright=false;
+          //tone(SND,1500,10);
+    }
+}
+
+
+void drawBall(int x, int y){
+  display.clearDisplay();
+
+  for(int16_t i=0; i<3; i++) {
+    display.fillCircle(display.width()/2, display.height()/2, i, SSD1306_WHITE);
+  }
+}
+     
 void setup() {
-    Serial.begin(9600);
+  delay(100);
+   Serial.begin(9600);
 
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
@@ -67,17 +156,25 @@ void setup() {
   // Clear the buffer
   display.clearDisplay();
 
+  pinMode(INTPIN,INPUT);  // set the correct ports to inputs
+  pinMode(UPPIN,INPUT);
+  pinMode(DWNPIN,INPUT);
+  pinMode(LFTPIN,INPUT);
+  pinMode(RHTPIN,INPUT);
+
+  attachInterrupt(digitalPinToInterrupt(INTPIN),interruptpressed,RISING); 
+  Serial.println("Setup Passed");
+//  waitForPress();    // display the snake start up screen
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
-}
-
-void drawBall(int x, int y){
   display.clearDisplay();
-
-  for(int16_t i=0; i<3; i++) {
-    display.fillCircle(display.width()/2, display.height()/2, i, SSD1306_WHITE);
+  // put your main code here, to run repeatedly:
+  delay(1);
+  display.drawPixel(x, 0, WHITE);
+  display.display();
+  x++;
+  if (x > worldMaxX) {
+    x = 0;
   }
 }
