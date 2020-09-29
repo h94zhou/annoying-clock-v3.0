@@ -72,14 +72,22 @@ bool butdown=0;   // we use this to set true to "detect" which direction pressed
 bool butleft=0;
 bool butright=0;
 
-int x=0;
-
 // world ints
 
 uint8_t worldMinX=0;        // these set the limits of the play area
 uint8_t worldMaxX=128;
-uint8_t worldMinY=10;
+uint8_t worldMinY=0;
 uint8_t worldMaxY=63;
+
+int ballX=worldMaxX/2;
+int ballY=worldMaxY/2;
+uint8_t ballSize=3;
+
+int paddleX=5;
+int paddleY=worldMaxY/2;
+uint8_t paddleW=3;
+uint8_t paddleH=10;
+
 
 void interruptpressed() {
     delay(200);  // slight delay for added "bounce" protection
@@ -131,13 +139,83 @@ void updatedirection() {
 
 
 void drawBall(int x, int y){
-  display.clearDisplay();
 
   for(int16_t i=0; i<3; i++) {
-    display.fillCircle(display.width()/2, display.height()/2, i, SSD1306_WHITE);
+    display.fillCircle(x, y, i, SSD1306_WHITE);
   }
 }
-     
+
+void updateDisplay()  // draw scores and outlines  
+{
+       // Serial.println("Update Display");
+//
+//        display.fillRect(0,0, display.width()-1,8,BLACK);
+//        display.setTextSize(0);
+//        display.setTextColor(WHITE);
+//       
+//        // draw scores
+//        display.setCursor(2,1);
+//        display.print("Score:");
+//        display.print(String(playscore, DEC));
+//        display.setCursor(66,1);
+//        display.print("High:");
+//        display.print(String(highscore ,DEC));
+//        // draw play area
+//        //        pos  1x,1y, 2x,2y,colour
+//        display.drawLine(0,0,127,0,WHITE); // very top border
+//        display.drawLine(63,0,63,9,WHITE); // score seperator
+//        display.drawLine(0,9, 127,9,WHITE); // below text border
+//        display.drawLine(0,63,127,63,WHITE); // bottom border
+//        display.drawLine(0,0,0,63,WHITE); // left border
+//        display.drawLine(127,0,127,63,WHITE); //right border
+
+    // draw ball
+    drawBall(ballX, ballY);
+    // draw paddles
+    display.fillRect(paddleX, paddleY, paddleW, paddleH, WHITE);
+
+}
+
+void updateGame()     // this updates the game area display
+{
+    display.clearDisplay();
+
+      // draw ball
+      // drawBall(ballX, ballY);
+      // check collision
+//      collide = checkCollision();  
+
+        // check for score
+
+//          if (checkScored()) {
+//            
+//          }
+
+        
+
+        switch(buttonpressed) // move paddle
+              {
+                case DIRUP:
+                    if (paddleY > worldMinY) {
+                      paddleY-=1;
+                    }
+                    break;
+                case DIRDOWN:
+                    if (paddleY < worldMaxY - paddleH) {
+                      paddleY+=1;
+                    }
+                    break;
+              }
+        // check if button is still held
+        if (!digitalRead(INTPIN)) {
+          buttonpressed = false;
+        }
+              
+    updateDisplay();
+    display.display();
+}
+
+
 void setup() {
   delay(100);
    Serial.begin(9600);
@@ -168,13 +246,5 @@ void setup() {
 }
 
 void loop() {
-  display.clearDisplay();
-  // put your main code here, to run repeatedly:
-  delay(1);
-  display.drawPixel(x, 0, WHITE);
-  display.display();
-  x++;
-  if (x > worldMaxX) {
-    x = 0;
-  }
+  updateGame();
 }
