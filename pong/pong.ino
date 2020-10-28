@@ -95,6 +95,7 @@ uint8_t paddleH=10;
 // opponent paddle
 int oppX=worldMaxX-5;
 int oppY=worldMaxY/2;
+int oppdY=1;
 
 uint8_t playerScore = 0;
 uint8_t oppScore = 0;
@@ -147,12 +148,13 @@ void updatedirection() {
     }
 }
 
-
-void drawBall(int x, int y) {
-
-  for(int16_t i=0; i<ballRadius; i++) {
-    display.fillCircle(x, y, i, SSD1306_WHITE);
+void moveOpponent() {
+  if (ballY > (oppY + paddleH/2)) {
+    oppY += oppdY;
+  } else if (ballY < (oppY + paddleH/2)) {
+    oppY -= oppdY;
   }
+  // otherwise don't move
 }
 
 bool checkCollision() {
@@ -177,6 +179,13 @@ bool checkCollision() {
     Serial.println("PADDLE");
     collide=true;
   }
+
+    // check for opponent paddle- ball must be travelling right (+ve)
+  if ((ballX >= oppX && ballX <= (oppX+paddleW)) && (ballY >= oppY && ballY <= (oppY+paddleH)) && (balldX > 0)) {
+    balldX *= -1;
+    Serial.println("OPP PADDLE");
+    collide=true;
+  }
   
   return collide;
 }
@@ -199,36 +208,40 @@ bool Score() {
   return false;
 }
 
+void drawBall(int x, int y) {
+
+  for(int8_t i=0; i<ballRadius; i++) {
+    display.fillCircle(x, y, i, SSD1306_WHITE);
+  }
+}
+
 void updateDisplay()  // draw scores and outlines  
 {
-       // Serial.println("Update Display");
-//
-//        display.fillRect(0,0, display.width()-1,8,BLACK);
-        display.setTextSize(0);
-        display.setTextColor(WHITE);
-//       
-//        // draw scores
+//    display.fillRect(0,0, display.width()-1,8,BLACK);
+    display.setTextSize(0);
+    display.setTextColor(WHITE);
+       
+    // draw scores
     display.setCursor((worldMaxX/2-10),1);
     display.print(String(playerScore, DEC));
     display.setCursor((worldMaxX/2+10),1);
     display.print(String(oppScore, DEC));
-//        display.setCursor(66,1);
-//        display.print("High:");
-//        display.print(String(highscore ,DEC));
-//        // draw play area
-//        //        pos  1x,1y, 2x,2y,colour
-//        display.drawLine(0,0,127,0,WHITE); // very top border
-//        display.drawLine(63,0,63,9,WHITE); // score seperator
-//        display.drawLine(0,9, 127,9,WHITE); // below text border
-//        display.drawLine(0,63,127,63,WHITE); // bottom border
-//        display.drawLine(0,0,0,63,WHITE); // left border
-//        display.drawLine(127,0,127,63,WHITE); //right border
+    
+    // draw play area
+    // pos  1x,1y, 2x,2y,colour
+//    display.drawLine(0,0,127,0,WHITE); // very top border
+//    display.drawLine(63,0,63,9,WHITE); // score seperator
+//    display.drawLine(0,9, 127,9,WHITE); // below text border
+//    display.drawLine(0,63,127,63,WHITE); // bottom border
+//    display.drawLine(0,0,0,63,WHITE); // left border
+//    display.drawLine(127,0,127,63,WHITE); //right border
 
     // draw ball
     drawBall(ballX, ballY);
+    
     // draw paddles
     display.fillRect(paddleX, paddleY, paddleW, paddleH, WHITE);
-
+    display.fillRect(oppX, oppY, paddleW, paddleH, WHITE);
 }
 
 void updateGame()     // this updates the game area display
@@ -252,6 +265,9 @@ void updateGame()     // this updates the game area display
     if (!digitalRead(INTPIN)) {
       buttonpressed = false;
     }
+
+    // move opponent
+    moveOpponent();
 
     // check collision
     bool collide = checkCollision();  
