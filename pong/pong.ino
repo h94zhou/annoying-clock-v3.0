@@ -96,6 +96,8 @@ uint8_t paddleH=10;
 int oppX=worldMaxX-5;
 int oppY=worldMaxY/2;
 
+uint8_t playerScore = 0;
+uint8_t oppScore = 0;
 
 void interruptpressed() {
     delay(200);  // slight delay for added "bounce" protection
@@ -169,8 +171,8 @@ bool checkCollision() {
     collide=true;
   }
 
-  // check for paddle
-  if ((ballX >= paddleX && ballX <= (paddleX+paddleW)) && (ballY >= paddleY && ballY <= (paddleY+paddleH))) {
+  // check for paddle- ball must be travelling left (-ve)
+  if ((ballX >= paddleX && ballX <= (paddleX+paddleW)) && (ballY >= paddleY && ballY <= (paddleY+paddleH)) && (balldX < 0)) {
     balldX *= -1;
     Serial.println("PADDLE");
     collide=true;
@@ -179,18 +181,37 @@ bool checkCollision() {
   return collide;
 }
 
+bool Score() {
+  if (ballX <= (worldMinX + ballRadius + 1)) {
+    // opponent scores
+    oppScore++;
+    Serial.println("Opponent Scored");
+    return true;
+  }
+
+  if (ballX >= (worldMaxX - ballRadius - 1)) {
+    // player scores
+    playerScore++;
+    Serial.println("SCOREEE");
+    return true;
+  }
+
+  return false;
+}
+
 void updateDisplay()  // draw scores and outlines  
 {
        // Serial.println("Update Display");
 //
 //        display.fillRect(0,0, display.width()-1,8,BLACK);
-//        display.setTextSize(0);
-//        display.setTextColor(WHITE);
+        display.setTextSize(0);
+        display.setTextColor(WHITE);
 //       
 //        // draw scores
-//        display.setCursor(2,1);
-//        display.print("Score:");
-//        display.print(String(playscore, DEC));
+    display.setCursor((worldMaxX/2-10),1);
+    display.print(String(playerScore, DEC));
+    display.setCursor((worldMaxX/2+10),1);
+    display.print(String(oppScore, DEC));
 //        display.setCursor(66,1);
 //        display.print("High:");
 //        display.print(String(highscore ,DEC));
@@ -242,7 +263,7 @@ void updateGame()     // this updates the game area display
 //    Serial.println(balldY);
 
     // check for score
-
+    bool scored = Score();
 //          if (checkScored()) {
 //            
 //          }
