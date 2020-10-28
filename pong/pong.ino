@@ -79,14 +79,22 @@ uint8_t worldMaxX=128;
 uint8_t worldMinY=0;
 uint8_t worldMaxY=63;
 
-int ballX=worldMaxX/2;
-int ballY=worldMaxY/2;
-uint8_t ballSize=3;
+// ball x,y is center of ball, with 
+uint8_t ballX=worldMaxX/2;
+uint8_t ballY=worldMaxY/2;
+int balldX=1;
+int balldY=1;
+uint8_t ballRadius=3;
 
+// player paddle
 int paddleX=5;
 int paddleY=worldMaxY/2;
 uint8_t paddleW=3;
 uint8_t paddleH=10;
+
+// opponent paddle
+int oppX=worldMaxX-5;
+int oppY=worldMaxY/2;
 
 
 void interruptpressed() {
@@ -138,11 +146,37 @@ void updatedirection() {
 }
 
 
-void drawBall(int x, int y){
+void drawBall(int x, int y) {
 
-  for(int16_t i=0; i<3; i++) {
+  for(int16_t i=0; i<ballRadius; i++) {
     display.fillCircle(x, y, i, SSD1306_WHITE);
   }
+}
+
+bool checkCollision() {
+  // check if ball hits top/bottom wall or paddles
+  bool collide = false;
+
+  // top/bot wall
+  if (ballY <= 4 || ballY >= 59) {
+    balldY = balldY*-1;
+    collide= true;
+  }
+
+  // temp left right wall
+  if (ballX <= 4 || ballX >= 124) {
+    balldX *= -1;
+    collide=true;
+  }
+
+  // check for paddle
+  if ((ballX >= paddleX && ballX <= (paddleX+paddleW)) && (ballY >= paddleY && ballY <= (paddleY+paddleH))) {
+    balldX *= -1;
+    Serial.println("PADDLE");
+    collide=true;
+  }
+  
+  return collide;
 }
 
 void updateDisplay()  // draw scores and outlines  
@@ -180,37 +214,43 @@ void updateGame()     // this updates the game area display
 {
     display.clearDisplay();
 
-      // draw ball
-      // drawBall(ballX, ballY);
-      // check collision
-//      collide = checkCollision();  
+    switch(buttonpressed) // move paddle
+          {
+            case DIRUP:
+                if (paddleY > worldMinY) {
+                  paddleY-=1;
+                }
+                break;
+            case DIRDOWN:
+                if (paddleY < worldMaxY - paddleH) {
+                  paddleY+=1;
+                }
+                break;
+          }
+    // check if button is still held
+    if (!digitalRead(INTPIN)) {
+      buttonpressed = false;
+    }
 
-        // check for score
+    // check collision
+    bool collide = checkCollision();  
+//    Serial.print("Collide: ");
+//    Serial.print(collide);
+//    Serial.print(", ballY: ");
+//    Serial.print(ballY);
+//    Serial.print(", balldY: ");
+//    Serial.println(balldY);
+
+    // check for score
 
 //          if (checkScored()) {
 //            
 //          }
 
-        
+    // move ball
+    ballX += balldX;
+    ballY += balldY;
 
-        switch(buttonpressed) // move paddle
-              {
-                case DIRUP:
-                    if (paddleY > worldMinY) {
-                      paddleY-=1;
-                    }
-                    break;
-                case DIRDOWN:
-                    if (paddleY < worldMaxY - paddleH) {
-                      paddleY+=1;
-                    }
-                    break;
-              }
-        // check if button is still held
-        if (!digitalRead(INTPIN)) {
-          buttonpressed = false;
-        }
-              
     updateDisplay();
     display.display();
 }
