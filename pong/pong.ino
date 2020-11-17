@@ -1,3 +1,6 @@
+// TODO:: AI collision seems to be broken
+// fix ai movement so it only hits the ball sometimes
+
 /**************************************************************************
  This is an example for our Monochrome OLEDs based on SSD1306 drivers
 
@@ -82,15 +85,16 @@ uint8_t worldMaxY=63;
 // ball x,y is center of ball, with 
 uint8_t ballX=worldMaxX/2;
 uint8_t ballY=worldMaxY/2;
-int balldX=1;
-int balldY=1;
+int balldX=2;
+int balldY=2;
 uint8_t ballRadius=3;
 
 // player paddle
 int paddleX=5;
 int paddleY=worldMaxY/2;
 uint8_t paddleW=3;
-uint8_t paddleH=10;
+uint8_t paddleH=20;
+uint8_t paddledY = 3;
 
 // opponent paddle
 int oppX=worldMaxX-5;
@@ -149,11 +153,15 @@ void updatedirection() {
 }
 
 void moveOpponent() {
-  if (ballY > (oppY + paddleH/2)) {
-    oppY += oppdY;
-  } else if (ballY < (oppY + paddleH/2)) {
-    oppY -= oppdY;
+  if (ballY > (oppY + paddleH/2) || (ballY < 10 && oppdY < 0)) {
+    oppdY *= -1;
+  } else if (ballY < (oppY + paddleH/2 || (ballY > 53 && oppdY > 0))) {
+    oppdY *= -1;
   }
+//  if ((oppY <= worldMinY) || (oppY + paddleH) >= worldMaxY) {
+//    oppdY *= -1; 
+//  }
+  oppY += oppdY;
   // otherwise don't move
 }
 
@@ -252,12 +260,12 @@ void updateGame()     // this updates the game area display
           {
             case DIRUP:
                 if (paddleY > worldMinY) {
-                  paddleY-=1;
+                  paddleY-=paddledY;
                 }
                 break;
             case DIRDOWN:
                 if (paddleY < worldMaxY - paddleH) {
-                  paddleY+=1;
+                  paddleY+=paddledY;
                 }
                 break;
           }
